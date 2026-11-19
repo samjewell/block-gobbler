@@ -75,6 +75,6 @@ Save your changed project, restart with the green flag, and check one thing at a
 
 ## Small browser edits by hand
 
-Open `game.js` in a text editor. Near the top, change `SPEED = 220` or `GROWTH = 2`. Save and refresh the page. The four numbered comments mark memory, controls, eating, and drawing. HTML is the page's structure, CSS is its clothes, and JavaScript is its behaviour.
+Open `game.js` in a text editor. Near the top, change `SPEED = 220` or `GROWTH = 2`. Growth scales with snack size: grass adds 2 to the hole radius, wood adds 4.5, and cake adds 8. `GROWTH` sets the reward for a small grass block; bigger snacks multiply it. Save and refresh the page. The four numbered comments mark memory, controls, eating, and drawing. HTML is the page's structure, CSS is its clothes, and JavaScript is its behaviour.
 
 All art here is original simple vector/canvas artwork inspired by block games. No Minecraft assets are required.

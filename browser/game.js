@@ -6,7 +6,7 @@ const message = document.querySelector('#message');
 const keys = new Set();
 let hole, snacks, eaten, pointer, lastTime;
 const SPEED = 220; // Try 120 for a sleepy hole, or 350 for a speedy one!
-const GROWTH = 2; // How much bigger after each snack?
+const GROWTH = 2; // Radius gained from a small (12-pixel) grass block.
 
 function resetGame() {
   hole = { x: 400, y: 240, radius: 19 };
@@ -60,7 +60,9 @@ function eatSnacks() {
     if (snack.eaten) continue;
     const distance = Math.hypot(snack.x - hole.x, snack.y - hole.y);
     if (distance + snack.size * Math.SQRT2 / 2 < hole.radius) {
-      snack.eaten = true; eaten++; hole.radius += GROWTH;
+      // Bigger snacks give bigger growth: grass +2, wood +4.5, cake +8.
+      const growth = GROWTH * (snack.size / 12);
+      snack.eaten = true; eaten++; hole.radius += growth;
       scoreLabel.textContent = `Snacks ${eaten} / ${snacks.length}`;
       message.textContent = snack.kind === 'cake' ? 'CAKEQUAKE! The cake is in your tummy.' : 'CHOMP! Your hole grew.';
       if (eaten === snacks.length) message.textContent = 'Picnic demolished! New picnic?';

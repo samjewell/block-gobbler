@@ -39,7 +39,7 @@ Try one small change at a time: **predict → change → play → explain**. Sav
 
 ## Ideas / TODO
 
-- [ ] **Bigger snacks, bigger growth:** make the hole grow in proportion to the size of the snack it eats.
+- [x] **Bigger snacks, bigger growth:** make the hole grow in proportion to the size of the snack it eats. Grass adds 2 to the radius, wood adds 4.5, and cake adds 8.
 - [x] **Git version control:** keep the starter and each change in Git so we can compare versions and go back.
 - [ ] **Sound effects:** add satisfying chomps and a special cake sound.
 - [ ] **Grow the area:** add to the hole's area when eating, then calculate its radius, so growth feels more natural.
