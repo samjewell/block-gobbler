@@ -5,7 +5,7 @@ A tiny Hole.io-inspired family coding project: a hungry hole, a blocky meadow, a
 There are two different starters:
 
 - **Browser:** eat small grass blocks, grow enough to swallow wood, then gobble the cake. Clear all 23 snacks. No timer or losing.
-- **Scratch:** follow the mouse and eat endlessly respawning snacks. Grass and wood give 1 point; cake gives 3. Short, editable block stacks keep it approachable.
+- **Scratch:** follow the mouse, fully enclose small grass blocks, then grow enough for the larger wood and cake. Snacks respawn endlessly. Grass and wood give 1 point; cake gives 3. Short, editable block stacks keep it approachable.
 
 ## Play the browser game
 

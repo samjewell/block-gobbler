@@ -36,7 +36,7 @@ class Code:
  def setvar(self,name,value,change=False):return self.add('data_changevariableby' if change else 'data_setvariableto',{'VALUE':self.num(value)},{'VARIABLE':[name,{'Score':'score','Hole size':'size'}[name]]})
  def receive(self): return self.add('event_whenbroadcastreceived',fields={'BROADCAST_OPTION':['Start picnic','start']})
  def random(self,a,b):return self.reporter('operator_random',{'FROM':self.num(a),'TO':self.num(b)})
- def goto(self):return self.add('motion_gotoxy',{'X':self.ref(self.random(-200,200)),'Y':self.ref(self.random(-130,115))})
+ def goto(self):return self.add('motion_gotoxy',{'X':self.ref(self.random(-190,190)),'Y':self.ref(self.random(-110,90))})
 
 def target(name,costumes,code,stage=False,**kw):
  t=dict(isStage=stage,name=name,variables={},lists={},broadcasts={},blocks=code.fix(),comments={},currentCostume=0,costumes=costumes,sounds=[],volume=100,layerOrder=0 if stage else 1)
@@ -49,15 +49,28 @@ stage=target('Stage',[backdrop],c,True,variables={'score':['Score',0],'size':['H
 c=Code();e=c.receive();forever=c.add('control_forever');menu=c.add('motion_goto_menu',fields={'TO':['_mouse_']},shadow=True);go=c.add('motion_goto',{'TO':[1,menu]});size=c.add('looks_setsizeto',{'SIZE':c.var('Hole size')});c.chain(e,forever);c.sub(forever,c.chain(go,size));c.root(e)
 ht=target('Hole',[hole],c,size=60,layerOrder=1)
 foods=[]
-for i,(name,cost,points,x,y) in enumerate([('Grass',grass,1,-150,50),('Wood',wood,1,140,70),('Cake',cake,3,0,-100)]):
- c=Code();e=c.receive();hide=c.add('looks_hide');go=c.goto();forever=c.add('control_forever');c.chain(e,hide,go,forever)
+# Radius bounds surround the painted corners at 100% costume size.
+for i,(name,cost,points,x,y,scale,snack_radius) in enumerate([('Grass',grass,1,-150,50,100,19),('Wood',wood,1,140,70,140,22),('Cake',cake,3,0,-100,200,25)]):
+ c=Code();e=c.receive();hide=c.add('looks_hide');setsize=c.add('looks_setsizeto',{'SIZE':c.num(scale)});go=c.goto();forever=c.add('control_forever');c.chain(e,hide,setsize,go,forever)
  # Pick a safe new place, even when the hole is large.
  menu=c.add('sensing_distancetomenu',fields={'DISTANCETOMENU':['Hole']},shadow=True);dist=c.reporter('sensing_distanceto',{'DISTANCETOMENU':[1,menu]});gt=c.reporter('operator_gt',{'OPERAND1':c.ref(dist),'OPERAND2':c.num(110)});pick=c.add('control_repeat_until',{'CONDITION':c.ref(gt)});c.sub(pick,c.goto())
- show=c.add('looks_show');menu=c.add('sensing_touchingobjectmenu',fields={'TOUCHINGOBJECTMENU':['Hole']},shadow=True);touch=c.reporter('sensing_touchingobject',{'TOUCHINGOBJECTMENU':[1,menu]});wait=c.add('control_wait_until',{'CONDITION':c.ref(touch)})
+ show=c.add('looks_show')
+ # A snack must fit completely inside the dark mouth, not merely touch it.
+ menu=c.add('sensing_distancetomenu',fields={'DISTANCETOMENU':['Hole']},shadow=True)
+ distance=c.reporter('sensing_distanceto',{'DISTANCETOMENU':[1,menu]})
+ food_size=c.reporter('looks_size')
+ scaled_radius=c.reporter('operator_multiply',{'NUM1':c.num(snack_radius / 100),'NUM2':c.ref(food_size)})
+ reach=c.reporter('operator_add',{'NUM1':c.ref(distance),'NUM2':c.ref(scaled_radius)})
+ # Read the Hole sprite's actual size, so the test matches its visible mouth.
+ menu=c.add('sensing_of_object_menu',fields={'OBJECT':['Hole']},shadow=True)
+ hole_size=c.reporter('sensing_of',{'OBJECT':[1,menu]}, {'PROPERTY':['size',None]})
+ mouth=c.reporter('operator_multiply',{'NUM1':c.num(.45),'NUM2':c.ref(hole_size)})
+ fits=c.reporter('operator_lt',{'OPERAND1':c.ref(reach),'OPERAND2':c.ref(mouth)})
+ wait=c.add('control_wait_until',{'CONDITION':c.ref(fits)})
  hide2=c.add('looks_hide');score=c.setvar('Score',points,True)
  lt=c.reporter('operator_lt',{'OPERAND1':c.var('Hole size'),'OPERAND2':c.num(140)});cond=c.add('control_if',{'CONDITION':c.ref(lt)});c.sub(cond,c.setvar('Hole size',4,True))
  pause=c.add('control_wait',{'DURATION':c.num(.25)});relocate=c.goto();c.sub(forever,c.chain(pick,show,wait,hide2,score,cond,pause,relocate));c.root(e)
- foods.append(target(name,[cost],c,x=x,y=y,layerOrder=i+2))
+ foods.append(target(name,[cost],c,x=x,y=y,size=scale,layerOrder=i+2))
 project=dict(targets=[stage,ht,*foods],monitors=[dict(id='score',mode='default',opcode='data_variable',params={'VARIABLE':'Score'},spriteName=None,value=0,width=0,height=0,x=8,y=8,visible=True,sliderMin=0,sliderMax=100,isDiscrete=True)],extensions=[],meta=dict(semver='3.0.0',vm='12.0.0',agent='Family Block Gobbler starter'))
 with zipfile.ZipFile(out/'Block-Gobbler-Scratch.sb3','w',zipfile.ZIP_DEFLATED) as z:
  z.writestr('project.json',json.dumps(project))

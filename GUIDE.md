@@ -14,7 +14,7 @@ Move with **arrow keys or WASD**, or **hold and drag** inside the field. Eat sma
 2. Open **https://scratch.mit.edu/projects/editor/** on a laptop or desktop. Close any welcome tutorial if it covers the editor.
 3. In Scratch's top bar, choose **File → Load from your computer**. This is Scratch's File menu, inside the page, rather than your browser's menu. If another project is already open, save it first: loading replaces that editor project.
 4. Select `Block-Gobbler-Scratch.sb3`. You should see a green meadow, a hole, and three snack sprites: Grass, Wood, Cake.
-5. Click the **green flag** above the stage. Move your mouse across the stage: the hole follows it. Touch snacks to eat them. Grass and wood give 1 point; cake gives 3. Snacks reappear somewhere new. The hole grows up to a comfortable maximum.
+5. Click the **green flag** above the stage. Move your mouse across the stage: the hole follows it. Move the hole completely around a snack to eat it. Start with grass: wood and cake are too big until you grow. Grass and wood give 1 point; cake gives 3. Snacks reappear somewhere new. The hole grows up to a comfortable maximum.
 6. Click the red stop button to pause. Click the green flag again to restart with score zero.
 7. To keep your changes, choose **File → Save to your computer**. Give each round a new filename, such as `cake-world-round-2.sb3`. An account is only needed if you want to save to your Scratch account or share online.
 
@@ -35,7 +35,7 @@ Start by playing for two minutes. Ask: **“What does our game need to remember?
 | Memory | `hole`, `snacks`, `eaten` near the top of `game.js` | Orange Variables: `Score` and `Hole size` |
 | Start again | `resetGame()` puts everything back | Stage: green flag → reset variables → broadcast `Start picnic` |
 | Move | `moveHole()` reads keys or pointer | Hole: when I receive `Start picnic` → forever → go to mouse-pointer → set size |
-| Detect a snack | `eatSnacks()` checks distance and whether it fits | Each food: wait until touching Hole |
+| Detect a snack | `eatSnacks()` checks distance and whether it fits | Each food: wait until distance + snack radius < mouth radius |
 | Reward | Mark snack eaten, add score, grow hole | Hide → change Score → grow Hole size → wait → find a new place |
 | Repeat | `requestAnimationFrame(frame)` runs a flip-book loop | Orange `forever` blocks keep the game alive |
 
@@ -43,7 +43,13 @@ In Scratch, click **Stage**, then **Code** to see the reset stack. Click **Hole*
 
 The food's `repeat until distance to Hole > 110` loop picks a new position away from the hole. That prevents food from repeatedly appearing in its mouth. `Hole size < 140` stops growth from filling the whole stage.
 
-**Deliberate difference:** the browser game needs snacks to fit fully inside the hole and has a finish. Scratch uses touching, with endless snacks. That keeps the Scratch blocks approachable.
+**Full-overlap rule in Scratch:** each food now waits until `distance to Hole + snack radius < mouth radius`. This means both size and position matter. The snack radius surrounds its painted corners and scales with the food sprite's actual size: Grass uses `0.19 × size`, Wood `0.22 × size`, and Cake `0.25 × size`. The mouth radius is `0.45 × size of Hole`, read from the actual Hole sprite with the blue Sensing `size of Hole` reporter. The pale rim does not count as mouth.
+
+Grass starts at 100%, wood at 140%, and cake at 200%. With the hole starting at 60%, grass fits, wood needs some growth, and cake needs more. These sizes reset at the top of each food's script when you press the green flag. The radius bounds are rounded up slightly, so the whole food is safely inside before eating; this is a little stricter than testing each corner individually.
+
+To find the new blocks, click Grass, Wood, or Cake → Code → look inside `wait until`. For a manual size experiment, change the food's starting `set size to` block; its fit check automatically follows the new size. If you redraw the costume much larger, its radius multiplier may also need changing.
+
+**Deliberate difference:** the browser game has a finish; Scratch keeps spawning snacks. Both now require a snack to fit completely inside the mouth.
 
 For your 5-year-old: choose colours, steer, draw a costume, predict what a number changes. For your 8-year-old: find the variable, explain the loop, change a rule, test it. Swap roles each round.
 
@@ -66,7 +72,7 @@ For a future Scratch round, attach your latest `.sb3` so changes you made by han
 - **Cake jackpot:** click Cake → Code. Change `change Score by 3` to `10`. Predict, then eat one cake. Change it back if the game gets too easy.
 - **A bigger baby hole:** click Stage. Change `set Hole size to 60` to `80`. Press the green flag. Starting values are in Stage because that is where reset happens.
 - **Slow-growing giant:** in each food sprite, change `change Hole size by 4` to `2`. Do all three for a consistent rule.
-- **Make a creeper cake:** Cake → Costumes. Paint green icing and a funny square face. Keep the drawing near its current size so touching still feels fair.
+- **Make a creeper cake:** Cake → Costumes. Paint green icing and a funny square face. Keep the drawing near its current size so the fit radius still surrounds its corners.
 - **More snacks:** right-click Grass in the sprite list → Duplicate. Rename it `Super Grass`. Its copied blocks already work. Give it its own costume and score reward.
 - **Make food rest:** each food's stack includes `wait 0.25 seconds` after it is eaten. Change it to `2` so it takes longer to come back.
 - **A silly voice:** on Hole, attach `when this sprite clicked` → `say “I am a very suspicious doughnut” for 2 seconds`. This adds a separate stack; keep the movement stack.
