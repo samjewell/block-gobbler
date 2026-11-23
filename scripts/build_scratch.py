@@ -46,7 +46,7 @@ def target(name,costumes,code,stage=False,**kw):
 c=Code();flag=c.add('event_whenflagclicked');s=c.setvar('Score',0);z=c.setvar('Hole size',60)
 m=c.add('event_broadcast_menu',fields={'BROADCAST_OPTION':['Start picnic','start']},shadow=True);b=c.add('event_broadcast',{'BROADCAST_INPUT':[1,m]});c.chain(flag,s,z,b);c.root(flag)
 stage=target('Stage',[backdrop],c,True,variables={'score':['Score',0],'size':['Hole size',60]},broadcasts={'start':'Start picnic'})
-c=Code();e=c.receive();forever=c.add('control_forever');menu=c.add('motion_goto_menu',fields={'TO':['_mouse_']},shadow=True);go=c.add('motion_goto',{'TO':[1,menu]});size=c.add('looks_setsizeto',{'SIZE':c.var('Hole size')});c.chain(e,forever);c.sub(forever,c.chain(go,size));c.root(e)
+c=Code();e=c.receive();back=c.add('looks_gotofrontback',fields={'FRONT_BACK':['back']});forever=c.add('control_forever');menu=c.add('motion_goto_menu',fields={'TO':['_mouse_']},shadow=True);go=c.add('motion_goto',{'TO':[1,menu]});size=c.add('looks_setsizeto',{'SIZE':c.var('Hole size')});c.chain(e,back,forever);c.sub(forever,c.chain(go,size));c.root(e)
 ht=target('Hole',[hole],c,size=60,layerOrder=1)
 foods=[]
 # Radius bounds surround the painted corners at 100% costume size.
