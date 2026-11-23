@@ -1,12 +1,16 @@
 # Block Gobbler: a tiny family coding adventure
 
-A Minecraft-inspired picnic, a hungry hole, and an unlucky cake. These are intentionally small starters with plenty left for your family to invent. No accounts, ads, multiplayer, or timer inside either game.
+A tiny town to gobble in the browser, plus a Minecraft-inspired picnic in Scratch. These are intentionally small starters with plenty left for your family to invent. No accounts, ads, multiplayer, or timer inside either game.
 
 ## Play the HTML / CSS / JavaScript version
 
 Download and unzip this repository, open `browser/`, and double-click `index.html`. It runs locally in a modern browser; no installation or server needed. Keep `index.html`, `style.css`, and `game.js` together.
 
-Move with **arrow keys or WASD**, or **hold and drag** inside the field. Eat small grass blocks first. Your hole grows after every snack; wood and then cake will fit. Clear all 23 snacks. **New picnic** resets everything. On a tablet, drag a finger to steer.
+Move with **arrow keys or WASD**, or **hold a pointer away from the centre** to steer. A pointer closer to the centre moves more slowly; release to stop. The hole stays in the middle while the town moves around it.
+
+There are **20 object types, 20 sizes, and 80 objects**. Start with people and pets, then work up to furniture, cars, trucks, boats, houses, offices, a lighthouse, and tower blocks. Bigger objects give more growth. The camera smoothly zooms out as the hole grows, so its mouth stays the same size on screen while objects shrink. An edge marker points toward the nearest edible object when it is off screen.
+
+The whole object must fit inside the mouth before it is eaten. **New town** resets everything. On a tablet, hold a finger away from the centre to steer.
 
 ## Import and run the Scratch version
 
@@ -32,12 +36,12 @@ Start by playing for two minutes. Ask: **“What does our game need to remember?
 |---|---|---|
 | A place to play | `index.html` holds the canvas, title, score, button | Stage → Backdrops: the pixel meadow |
 | How it looks | `style.css` styles the page; `drawWorld()` paints the game | Each sprite → Costumes: hole, grass, wood, cake |
-| Memory | `hole`, `snacks`, `eaten` near the top of `game.js` | Orange Variables: `Score` and `Hole size` |
+| Memory | `hole`, `snacks`, `eaten`, `collected`, `camera` in `game.js` | Orange Variables: `Score` and `Hole size` |
 | Start again | `resetGame()` puts everything back | Stage: green flag → reset variables → broadcast `Start picnic` |
-| Move | `moveHole()` reads keys or pointer | Hole: when I receive `Start picnic` → forever → go to mouse-pointer → set size |
+| Move | `moveHole()` reads keys or pointer; `screenPosition()` centres the view | Hole: when I receive `Start picnic` → forever → go to mouse-pointer → set size |
 | Detect a snack | `eatSnacks()` checks distance and whether it fits | Each food: wait until distance + snack radius < mouth radius |
-| Reward | Mark snack eaten, add score, grow hole | Hide → change Score → grow Hole size → wait → find a new place |
-| Repeat | `requestAnimationFrame(frame)` runs a flip-book loop | Orange `forever` blocks keep the game alive |
+| Reward | Mark object eaten, add score, grow target radius | Hide → change Score → grow Hole size → wait → find a new place |
+| Repeat | `requestAnimationFrame(frame)` animates; `updateCamera()` grows the hole and zooms out | Orange `forever` blocks keep the game alive |
 
 In Scratch, click **Stage**, then **Code** to see the reset stack. Click **Hole** to see the movement stack. Click **Cake** to see the eating stack. The green blocks test things, the orange blocks decide/repeat, blue moves sprites, purple changes their appearance.
 
@@ -49,7 +53,7 @@ Grass starts at 100%, wood at 140%, and cake at 200%. With the hole starting at 
 
 To find the new blocks, click Grass, Wood, or Cake → Code → look inside `wait until`. For a manual size experiment, change the food's starting `set size to` block; its fit check automatically follows the new size. If you redraw the costume much larger, its radius multiplier may also need changing.
 
-**Deliberate difference:** the browser game has a finish; Scratch keeps spawning snacks. Both now require a snack to fit completely inside the mouth.
+**Deliberate difference:** the browser game has a town and a finish; Scratch keeps spawning picnic snacks. Both now require a snack to fit completely inside the mouth.
 
 For your 5-year-old: choose colours, steer, draw a costume, predict what a number changes. For your 8-year-old: find the variable, explain the loop, change a rule, test it. Swap roles each round.
 
@@ -59,7 +63,7 @@ Choose one small change per round. Play → predict → ask → test → explain
 
 1. **Personality.** “In our [Scratch/browser] Block Gobbler, make the hole say a silly cake joke when it eats cake. Keep the code simple. Show us exactly what changed.”
 2. **A new snack.** “Add a pink diamond worth 5 points to the [Scratch/browser] game. Use our existing snack pattern. Let us choose where it appears. Explain the new variable or blocks.”
-3. **An ending.** “For Scratch, add a goal of 20 points and a big ‘PICNIC DEMOLISHED!’ message. Stop the game when we reach the goal and make the green flag reset it properly.” Or: “For the browser game, add a visible cake counter and a victory dance when every snack is eaten.”
+3. **An ending.** “For Scratch, add a goal of 20 points and a big ‘PICNIC DEMOLISHED!’ message. Stop the game when we reach the goal and make the green flag reset it properly.” Or: “For the browser game, add a victory dance when every object has been eaten.”
 4. **A friendly surprise.** “Add one wandering chicken that drops cake every five seconds. Keep it slow and friendly, with no losing. Explain the movement and timing.”
 5. **Our own idea.** “Our boys want [their idea]. Suggest the smallest playable version first. Add only that. Explain it so an 8-year-old can teach a 5-year-old.”
 
@@ -81,6 +85,6 @@ Save your changed project, restart with the green flag, and check one thing at a
 
 ## Small browser edits by hand
 
-Open `game.js` in a text editor. Near the top, change `SPEED = 220` or `GROWTH = 2`. Growth scales with snack size: grass adds 2 to the hole radius, wood adds 4.5, and cake adds 8. `GROWTH` sets the reward for a small grass block; bigger snacks multiply it. Save and refresh the page. The four numbered comments mark memory, controls, eating, and drawing. HTML is the page's structure, CSS is its clothes, and JavaScript is its behaviour.
+Open `game.js` in a text editor. Near the top, change `SPEED = 220` or `GROWTH = 2`. Growth scales with object size: `GROWTH` sets the reward for a 12-unit person; bigger objects multiply it. `TYPES` lists the 20 objects and their sizes. `SCREEN_RADIUS` controls how big the hole looks on screen; its world radius and camera scale change together so it stays centred and visually the same size. `drawObject()` paints each type with simple shapes. Save and refresh the page. The four numbered comments mark memory, controls, eating, and drawing. HTML is the page's structure, CSS is its clothes, and JavaScript is its behaviour.
 
 All art here is original simple vector/canvas artwork inspired by block games. No Minecraft assets are required.
