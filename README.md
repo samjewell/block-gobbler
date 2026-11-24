@@ -9,6 +9,8 @@ There are two different starters:
 
 ## Play the browser game
 
+**[Play online](https://samjewell.github.io/block-gobbler/)** — no download needed.
+
 Download this repository using **Code → Download ZIP**, unzip it, and open [`browser/index.html`](browser/index.html) in a modern browser. Keep the three browser files together. No installation, server, or build step is needed.
 
 Move using **WASD**, **arrow keys**, or **hold a mouse or finger away from the centre** to steer. Release it to stop. Hold nearer the centre for finer control; keyboard input takes priority. Click **New town** to restart.
@@ -58,6 +60,10 @@ Try one small change at a time: **predict → change → play → explain**. Sav
 ## Run the checks
 
 With Node.js installed, run `node --test tests/browser-game.test.cjs`. No packages are needed. Checks cover full containment, size progression, smooth camera scaling, keyboard and pointer controls, and restarting.
+
+## Publishing
+
+GitHub Pages serves the contents of `browser/`. The [publishing workflow](.github/workflows/pages.yml) runs the game checks and deploys on every push to `main`; it can also be started manually from GitHub Actions. If checks fail, the existing live version stays available.
 
 ## Credits
 

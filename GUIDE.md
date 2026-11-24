@@ -4,6 +4,8 @@ A tiny town to gobble in the browser, plus a Minecraft-inspired picnic in Scratc
 
 ## Play the HTML / CSS / JavaScript version
 
+Play online at **https://samjewell.github.io/block-gobbler/**, or use the offline instructions below.
+
 Download and unzip this repository, open `browser/`, and double-click `index.html`. It runs locally in a modern browser; no installation or server needed. Keep `index.html`, `style.css`, and `game.js` together.
 
 Move with **arrow keys or WASD**, or **hold a pointer away from the centre** to steer. A pointer closer to the centre moves more slowly; release to stop. The hole stays in the middle while the town moves around it.
