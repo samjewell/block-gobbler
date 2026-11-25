@@ -52,7 +52,7 @@ Try one small change at a time: **predict → change → play → explain**. Sav
 - [ ] **Accelerate while holding a key:** start slowly for precise control, then build up to a faster speed as the key stays down.
 - [ ] **Two-player fun:** cooperative and competitive modes, with WASD for one player and arrow keys for the other. Players cannot eat each other.
 - [ ] **Growing eyes:** make the eyes scale up as the hole grows.
-- [ ] **Add a boundary:** give the town a clear edge that the hole cannot cross.
+- [x] **Add a boundary:** a double town wall marks the edge, and the whole hole is kept inside it as it moves and grows.
 - [ ] **Make progression more challenging:** start with a smaller hole and grow more slowly relative to object sizes. Place objects nearby that cannot be eaten until later, and make finding the next small enough snack a challenge.
 - [ ] **Mix up the town:** intersperse different object types and sizes, arranging them more like a real town rather than groups of matching snacks.
 - [ ] **Hole characters:** add different avatars so players can choose their hole's character.

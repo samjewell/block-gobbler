@@ -58,6 +58,15 @@ test('pointer dead zone, steering, and release work with the moving camera', () 
   g.read('moveHole(1)'); assert.ok(g.read('hole.x > 0'));
   g.handlers['canvas:pointerup'](); assert.equal(g.read('pointer'), null);
 });
+test('the town wall keeps the entire growing hole inside the boundary', () => {
+  const g = game();
+  g.read("keys.add('d'); hole.x = TOWN_EDGE - hole.radius - 1; moveHole(1)");
+  assert.equal(g.read('hole.x'), g.read('TOWN_EDGE - hole.radius'));
+  assert.match(g.read('message.textContent'), /town wall/);
+  g.read("keys.clear(); hole.x = TOWN_EDGE - START_RADIUS; hole.radius = 500; hole.targetRadius = 500; updateCamera(0)");
+  assert.equal(g.read('hole.x'), g.read('TOWN_EDGE - hole.radius'));
+  assert.ok(g.read('Math.abs(hole.y) + hole.radius <= TOWN_EDGE'));
+});
 test('the whole town can be eaten in size order, then reset', () => {
   const g = game();
   g.read('for (const snack of snacks) { if (snack.eaten) continue; hole.x = snack.x; hole.y = snack.y; eatSnacks(); updateCamera(10); }');

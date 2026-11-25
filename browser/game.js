@@ -9,6 +9,7 @@ const SPEED = 210; // Screen pixels per second, so exploring stays comfortable a
 const GROWTH = 2; // Radius gained per 12 world units of object size.
 const SCREEN_RADIUS = 42; // The hole always looks this big on screen.
 const START_RADIUS = 19;
+const TOWN_EDGE = 8000; // World-coordinate edge of the square town.
 const TYPES = [
   { kind: 'person', name: 'Person', size: 12, colour: '#f18470' },
   { kind: 'cat', name: 'Cat', size: 15, colour: '#e9ab5a' },
@@ -34,7 +35,7 @@ const TYPES = [
 let hole, snacks, eaten, collected, pointer, lastTime, camera;
 
 function resetGame() {
-  hole = { x: 0, y: 0, radius: START_RADIUS, targetRadius: START_RADIUS };
+  hole = { x: 0, y: 0, radius: START_RADIUS, targetRadius: START_RADIUS, touchingBoundary: false };
   camera = { scale: SCREEN_RADIUS / hole.radius };
   eaten = 0; collected = new Set(); pointer = null; keys.clear(); lastTime = null;
   // Four of every type, in expanding neighbourhoods. No randomness or dead ends.
@@ -87,6 +88,17 @@ function moveHole(seconds) {
     const step = SPEED * seconds * throttle / camera.scale;
     hole.x += dx / distance * step; hole.y += dy / distance * step;
   }
+  constrainHole();
+}
+function constrainHole() {
+  // Keep the complete mouth inside town. As it grows at the wall, it is gently
+  // moved inward so the rim never crosses the boundary.
+  const edge = TOWN_EDGE - hole.radius;
+  const wasOutside = Math.abs(hole.x) > edge || Math.abs(hole.y) > edge;
+  hole.x = Math.max(-edge, Math.min(edge, hole.x));
+  hole.y = Math.max(-edge, Math.min(edge, hole.y));
+  if (wasOutside && !hole.touchingBoundary) message.textContent = 'CLUNK! The town wall stops you.';
+  hole.touchingBoundary = wasOutside;
 }
 
 // BUILDING BLOCK 3: the entire square bounding the object must fit in the mouth.
@@ -109,6 +121,7 @@ function updateCamera(seconds) {
   // The mouth stays centred and constant on screen; the town slowly shrinks instead.
   hole.radius += (hole.targetRadius - hole.radius) * (1 - Math.exp(-seconds * 2));
   camera.scale = SCREEN_RADIUS / hole.radius;
+  constrainHole();
 }
 function screenPosition(x, y) {
   return { x: canvas.width / 2 + (x - hole.x) * camera.scale,
@@ -208,6 +221,15 @@ function drawTown() {
     rect(0, p.y + 8 * camera.scale, canvas.width, 94 * camera.scale, '#99aaa6');
     rect(0, p.y + 54 * camera.scale, canvas.width, 2 * camera.scale, '#e6e9cf');
   }
+  // The double wall stays in the world, so it approaches as the hole travels.
+  const corner = screenPosition(-TOWN_EDGE, -TOWN_EDGE);
+  const width = TOWN_EDGE * 2 * camera.scale;
+  ctx.save();
+  ctx.strokeStyle = '#2f5660'; ctx.lineWidth = Math.max(3, 18 * camera.scale);
+  ctx.strokeRect(corner.x, corner.y, width, width);
+  ctx.strokeStyle = '#f3d77d'; ctx.lineWidth = Math.max(1.5, 5 * camera.scale);
+  ctx.strokeRect(corner.x, corner.y, width, width);
+  ctx.restore();
 }
 function drawHole() {
   const x = canvas.width / 2, y = canvas.height / 2;
