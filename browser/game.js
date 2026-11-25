@@ -9,7 +9,7 @@ const SPEED = 210; // Screen pixels per second, so exploring stays comfortable a
 const GROWTH = 2; // Radius gained per 12 world units of object size.
 const SCREEN_RADIUS = 42; // The hole always looks this big on screen.
 const START_RADIUS = 19;
-const TOWN_EDGE = 8000; // World-coordinate edge of the square town.
+const TOWN_EDGE = 5000; // World-coordinate edge of the square town.
 const TYPES = [
   { kind: 'person', name: 'Person', size: 12, colour: '#f18470' },
   { kind: 'cat', name: 'Cat', size: 15, colour: '#e9ab5a' },
@@ -41,8 +41,9 @@ function resetGame() {
   // Four of every type, in expanding neighbourhoods. No randomness or dead ends.
   snacks = TYPES.flatMap((type, tier) => Array.from({ length: 4 }, (_, copy) => {
     const angle = tier * 0.82;
-    const distance = tier === 0 ? 0 : 145 * Math.pow(1.22, tier);
-    const spread = 48 + type.size * 0.9;
+    // Compact neighbourhoods keep every object reachable before the town wall.
+    const distance = tier === 0 ? 0 : 95 * Math.pow(1.18, tier);
+    const spread = 36 + type.size * 0.55;
     const offset = copy * Math.PI / 2 + 0.5;
     return { ...type, x: Math.cos(angle) * distance + Math.cos(offset) * spread,
       y: Math.sin(angle) * distance + Math.sin(offset) * spread, eaten: false };
@@ -239,6 +240,18 @@ function drawHole() {
   rect(x - 14, y - 8, 8, 10, '#fff5da'); rect(x + 6, y - 8, 8, 10, '#fff5da');
   rect(x - 11, y - 5, 3, 4, '#263f48'); rect(x + 9, y - 5, 3, 4, '#263f48');
 }
+function drawTownMap() {
+  // A small map makes the world boundary clear long before the player reaches it.
+  const size = 78, x = canvas.width - size - 14, y = 14;
+  rect(x - 4, y - 4, size + 8, size + 8, '#17353b');
+  rect(x, y, size, size, '#bdd0ae');
+  ctx.strokeStyle = '#f3d77d'; ctx.lineWidth = 2; ctx.strokeRect(x, y, size, size);
+  const dotX = x + (hole.x + TOWN_EDGE) / (TOWN_EDGE * 2) * size;
+  const dotY = y + (hole.y + TOWN_EDGE) / (TOWN_EDGE * 2) * size;
+  circle(dotX, dotY, 3, '#172c34');
+  ctx.font = 'bold 10px ui-monospace, monospace'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff5da'; ctx.fillText('TOWN WALL', x + size / 2, y + size + 17);
+}
 function drawGuide() {
   // Point at the nearest object small enough to fit, without revealing any hidden rules.
   let nearest = null, distance = Infinity;
@@ -262,6 +275,7 @@ function drawWorld() {
   drawTown(); drawHole();
   for (const snack of snacks) if (!snack.eaten) drawObject(snack);
   drawGuide();
+  drawTownMap();
 }
 function frame(time) {
   const seconds = lastTime === null ? 0 : Math.min((time - lastTime) / 1000, .05);

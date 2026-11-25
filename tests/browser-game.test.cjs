@@ -23,6 +23,9 @@ test('20 types, 20 sizes, four of each, and much bigger final objects', () => {
   assert.equal(g.read('new Set(TYPES.map(t => t.size)).size'), 20);
   assert.equal(g.read('snacks.length'), 80); assert.ok(g.read('TYPES.at(-1).size') > 48 * 10);
   assert.ok(g.read('TYPES.every(t => snacks.filter(s => s.kind === t.kind).length === 4)'));
+  const finalRadius = g.read('START_RADIUS + TYPES.reduce((total, type) => total + 4 * GROWTH * type.size / 12, 0)');
+  assert.ok(g.read(`snacks.every(snack => Math.abs(snack.x) + snack.size * Math.SQRT2 / 2 + ${finalRadius} < TOWN_EDGE)`));
+  assert.ok(g.read(`snacks.every(snack => Math.abs(snack.y) + snack.size * Math.SQRT2 / 2 + ${finalRadius} < TOWN_EDGE)`));
 });
 test('touching or partial overlap is insufficient, and a bigger object cannot fit', () => {
   const g = game();
