@@ -56,6 +56,13 @@ Try one small change at a time: **predict → change → play → explain**. Sav
 - [ ] **Make progression more challenging:** start with a smaller hole and grow more slowly relative to object sizes. Place objects nearby that cannot be eaten until later, and make finding the next small enough snack a challenge.
 - [x] **Mix up the town:** intersperse different object types and sizes in spiralling neighbourhoods, while leaving varied small objects in the starting area.
 - [ ] **Hole characters:** add different avatars so players can choose their hole's character.
+- [ ] **An honest mini-map:** make the mini-map hole grow and shrink at the same relative size as the real hole.
+- [ ] **Eat the whole wall:** once the hole is fully grown, let it munch any wall segment it can reach — not only the first one.
+- [ ] **A cosier town edge:** move the town wall closer to the buildings and objects.
+- [ ] **More exact chomping:** use more precise size and full-overlap checks, so an enclosed boat is eaten when it truly fits, but never before.
+- [ ] **Town, countryside, and coast:** put mostly fields rather than roads beyond the wall, and add a lake, river, or sea for boats with the lighthouse on the coast.
+- [ ] **A living town:** let people and animals wander around.
+- [ ] **Believable object sizes:** keep snacks in scale with one another — people bigger than cats and dogs, and the lighthouse taller than most buildings.
 
 ## Run the checks
 
