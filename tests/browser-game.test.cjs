@@ -26,6 +26,8 @@ test('20 types, 20 sizes, four of each, and much bigger final objects', () => {
   const finalRadius = g.read('START_RADIUS + TYPES.reduce((total, type) => total + 4 * GROWTH * type.size / 12, 0)');
   assert.ok(g.read(`snacks.every(snack => Math.abs(snack.x) + snack.size * Math.SQRT2 / 2 + ${finalRadius} < TOWN_EDGE)`));
   assert.ok(g.read(`snacks.every(snack => Math.abs(snack.y) + snack.size * Math.SQRT2 / 2 + ${finalRadius} < TOWN_EDGE)`));
+  assert.ok(g.read('new Set(snacks.slice(0, 8).map(snack => snack.kind)).size > 5'));
+  assert.ok(g.read('snacks.slice(0, 8).every(snack => snack.size <= 49)'));
 });
 test('touching or partial overlap is insufficient, and a bigger object cannot fit', () => {
   const g = game();
@@ -70,10 +72,21 @@ test('the town wall keeps the entire growing hole inside the boundary', () => {
   assert.equal(g.read('hole.x'), g.read('TOWN_EDGE - hole.radius'));
   assert.ok(g.read('Math.abs(hole.y) + hole.radius <= TOWN_EDGE'));
 });
+test('only a maximum-size hole can eat one wall segment and leave town', () => {
+  const g = game();
+  g.read("hole.x = TOWN_EDGE - hole.radius + 1; constrainHole()");
+  assert.equal(g.read('hole.outsideTown'), false);
+  assert.equal(g.read('Object.values(wallSegments).flat().filter(Boolean).length'), 0);
+  g.read("hole.radius = MAX_RADIUS; hole.targetRadius = MAX_RADIUS; hole.x = TOWN_EDGE - hole.radius + 1; constrainHole()");
+  assert.equal(g.read('hole.outsideTown'), true);
+  assert.equal(g.read('Object.values(wallSegments).flat().filter(Boolean).length'), 1);
+  assert.match(g.read('message.textContent'), /wall/);
+});
 test('the whole town can be eaten in size order, then reset', () => {
   const g = game();
-  g.read('for (const snack of snacks) { if (snack.eaten) continue; hole.x = snack.x; hole.y = snack.y; eatSnacks(); updateCamera(10); }');
+  g.read('for (const snack of snacks.slice().sort((a, b) => a.size - b.size)) { hole.x = snack.x; hole.y = snack.y; eatSnacks(); updateCamera(10); }');
   assert.equal(g.read('eaten'), 80); assert.equal(g.read('collected.size'), 20);
+  assert.equal(g.read('hole.targetRadius'), g.read('MAX_RADIUS'));
   assert.match(g.read('message.textContent'), /Town gobbled/);
   g.read('drawWorld(); resetGame(); drawWorld()');
   assert.equal(g.read('eaten'), 0); assert.equal(g.read('hole.radius'), 19);

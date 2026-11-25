@@ -10,6 +10,7 @@ const GROWTH = 2; // Radius gained per 12 world units of object size.
 const SCREEN_RADIUS = 42; // The hole always looks this big on screen.
 const START_RADIUS = 19;
 const TOWN_EDGE = 5000; // World-coordinate edge of the square town.
+const WALL_SEGMENTS_PER_SIDE = 16;
 const TYPES = [
   { kind: 'person', name: 'Person', size: 12, colour: '#f18470' },
   { kind: 'cat', name: 'Cat', size: 15, colour: '#e9ab5a' },
@@ -32,22 +33,29 @@ const TYPES = [
   { kind: 'apartments', name: 'Apartments', size: 439, colour: '#b29bc8' },
   { kind: 'tower', name: 'Tower block', size: 536, colour: '#718da9' }
 ];
-let hole, snacks, eaten, collected, pointer, lastTime, camera;
+// Small starting things are varied; later districts rotate the full catalogue.
+const MIXED_TYPE_ORDER = [0, 2, 1, 4, 3, 5, 6, 7, 9, 8, 10, 11, 13, 12, 14, 15, 17, 16, 19, 18];
+const MAX_RADIUS = START_RADIUS + TYPES.reduce((total, type) => total + 4 * GROWTH * type.size / 12, 0);
+let hole, snacks, eaten, collected, pointer, lastTime, camera, wallSegments;
 
 function resetGame() {
-  hole = { x: 0, y: 0, radius: START_RADIUS, targetRadius: START_RADIUS, touchingBoundary: false };
+  hole = { x: 0, y: 0, radius: START_RADIUS, targetRadius: START_RADIUS, touchingBoundary: false, outsideTown: false };
   camera = { scale: SCREEN_RADIUS / hole.radius };
   eaten = 0; collected = new Set(); pointer = null; keys.clear(); lastTime = null;
-  // Four of every type, in expanding neighbourhoods. No randomness or dead ends.
-  snacks = TYPES.flatMap((type, tier) => Array.from({ length: 4 }, (_, copy) => {
-    const angle = tier * 0.82;
-    // Compact neighbourhoods keep every object reachable before the town wall.
-    const distance = tier === 0 ? 0 : 95 * Math.pow(1.18, tier);
-    const spread = 36 + type.size * 0.55;
-    const offset = copy * Math.PI / 2 + 0.5;
-    return { ...type, x: Math.cos(angle) * distance + Math.cos(offset) * spread,
-      y: Math.sin(angle) * distance + Math.sin(offset) * spread, eaten: false };
-  }));
+  wallSegments = Object.fromEntries(['north', 'east', 'south', 'west'].map(side =>
+    [side, Array(WALL_SEGMENTS_PER_SIDE).fill(false)]));
+  // Interleave every kind of object in compact, spiralling neighbourhoods.
+  // The first neighbourhood deliberately includes a few things a tiny mouth can eat.
+  snacks = Array.from({ length: TYPES.length * 4 }, (_, slot) => {
+    const copy = Math.floor(slot / TYPES.length);
+    const type = TYPES[MIXED_TYPE_ORDER[(slot % TYPES.length + copy * 5) % TYPES.length]];
+    const neighbourhood = Math.floor(slot / 8);
+    const angle = slot * 2.399963229728653; // The golden angle keeps neighbours mixed up.
+    const distance = neighbourhood * 255 + (slot % 8) * 28;
+    const sideStep = 44 + type.size * 0.48;
+    return { ...type, x: Math.cos(angle) * distance + Math.sin(slot * 1.7) * sideStep,
+      y: Math.sin(angle) * distance + Math.cos(slot * 1.3) * sideStep, eaten: false };
+  });
   updateScore();
   message.textContent = 'Start small. The whole object must fit!';
 }
@@ -94,8 +102,20 @@ function moveHole(seconds) {
 function constrainHole() {
   // Keep the complete mouth inside town. As it grows at the wall, it is gently
   // moved inward so the rim never crosses the boundary.
+  if (hole.outsideTown) return;
   const edge = TOWN_EDGE - hole.radius;
   const wasOutside = Math.abs(hole.x) > edge || Math.abs(hole.y) > edge;
+  if (wasOutside && hole.radius >= MAX_RADIUS - 1) {
+    const side = Math.abs(hole.x) - edge > Math.abs(hole.y) - edge
+      ? (hole.x > 0 ? 'east' : 'west') : (hole.y > 0 ? 'south' : 'north');
+    const alongWall = side === 'east' || side === 'west' ? hole.y : hole.x;
+    const segment = Math.max(0, Math.min(WALL_SEGMENTS_PER_SIDE - 1,
+      Math.floor((alongWall + TOWN_EDGE) / (TOWN_EDGE * 2) * WALL_SEGMENTS_PER_SIDE)));
+    wallSegments[side][segment] = true;
+    hole.outsideTown = true;
+    message.textContent = 'CRUNCH! You ate a piece of the town wall!';
+    return;
+  }
   hole.x = Math.max(-edge, Math.min(edge, hole.x));
   hole.y = Math.max(-edge, Math.min(edge, hole.y));
   if (wasOutside && !hole.touchingBoundary) message.textContent = 'CLUNK! The town wall stops you.';
@@ -222,14 +242,28 @@ function drawTown() {
     rect(0, p.y + 8 * camera.scale, canvas.width, 94 * camera.scale, '#99aaa6');
     rect(0, p.y + 54 * camera.scale, canvas.width, 2 * camera.scale, '#e6e9cf');
   }
-  // The double wall stays in the world, so it approaches as the hole travels.
-  const corner = screenPosition(-TOWN_EDGE, -TOWN_EDGE);
-  const width = TOWN_EDGE * 2 * camera.scale;
-  ctx.save();
-  ctx.strokeStyle = '#2f5660'; ctx.lineWidth = Math.max(3, 18 * camera.scale);
-  ctx.strokeRect(corner.x, corner.y, width, width);
-  ctx.strokeStyle = '#f3d77d'; ctx.lineWidth = Math.max(1.5, 5 * camera.scale);
-  ctx.strokeRect(corner.x, corner.y, width, width);
+  drawTownWall();
+}
+function wallPoint(side, progress) {
+  const value = -TOWN_EDGE + progress * TOWN_EDGE * 2;
+  if (side === 'north') return { x: value, y: -TOWN_EDGE };
+  if (side === 'east') return { x: TOWN_EDGE, y: value };
+  if (side === 'south') return { x: value, y: TOWN_EDGE };
+  return { x: -TOWN_EDGE, y: value };
+}
+function drawTownWall() {
+  ctx.save(); ctx.lineCap = 'butt';
+  for (const side of Object.keys(wallSegments)) for (let segment = 0; segment < WALL_SEGMENTS_PER_SIDE; segment++) {
+    if (wallSegments[side][segment]) continue;
+    const from = wallPoint(side, segment / WALL_SEGMENTS_PER_SIDE);
+    const to = wallPoint(side, (segment + 1) / WALL_SEGMENTS_PER_SIDE);
+    const a = screenPosition(from.x, from.y);
+    const b = screenPosition(to.x, to.y);
+    ctx.strokeStyle = '#2f5660'; ctx.lineWidth = Math.max(3, 18 * camera.scale);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.strokeStyle = '#f3d77d'; ctx.lineWidth = Math.max(1.5, 5 * camera.scale);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
   ctx.restore();
 }
 function drawHole() {
@@ -245,7 +279,16 @@ function drawTownMap() {
   const size = 78, x = canvas.width - size - 14, y = 14;
   rect(x - 4, y - 4, size + 8, size + 8, '#17353b');
   rect(x, y, size, size, '#bdd0ae');
-  ctx.strokeStyle = '#f3d77d'; ctx.lineWidth = 2; ctx.strokeRect(x, y, size, size);
+  ctx.strokeStyle = '#f3d77d'; ctx.lineWidth = 2;
+  for (const side of Object.keys(wallSegments)) for (let segment = 0; segment < WALL_SEGMENTS_PER_SIDE; segment++) {
+    if (wallSegments[side][segment]) continue;
+    const a = wallPoint(side, segment / WALL_SEGMENTS_PER_SIDE);
+    const b = wallPoint(side, (segment + 1) / WALL_SEGMENTS_PER_SIDE);
+    ctx.beginPath();
+    ctx.moveTo(x + (a.x + TOWN_EDGE) / (TOWN_EDGE * 2) * size, y + (a.y + TOWN_EDGE) / (TOWN_EDGE * 2) * size);
+    ctx.lineTo(x + (b.x + TOWN_EDGE) / (TOWN_EDGE * 2) * size, y + (b.y + TOWN_EDGE) / (TOWN_EDGE * 2) * size);
+    ctx.stroke();
+  }
   const dotX = x + (hole.x + TOWN_EDGE) / (TOWN_EDGE * 2) * size;
   const dotY = y + (hole.y + TOWN_EDGE) / (TOWN_EDGE * 2) * size;
   circle(dotX, dotY, 3, '#172c34');
